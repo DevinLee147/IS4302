@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./WeTubeToken.sol";
 
 contract SupporterContract {
@@ -24,20 +25,31 @@ contract SupporterContract {
         tokenContract = WeTubeToken(_tokenContract);
     }
 
-    function buyToken(address projectAddress, uint amount) external payable {
-        // Implement logic for buying tokens
-        // This function may interact with other contracts
+    function buyToken(uint amount) external payable {
+        require(amount > 0 && msg.value == amount * tokenContract.tokenPrice(), "Invalid pledge amount");
+        require(tokenContract.balanceOf(address(this)) >= amount, "Insufficient tokens available");
+
+        // Associate the purchased tokens with the supporter
+        tokenContract.transfer(msg.sender, amount);
     }
 
-    function transferToken(address from, address to, uint amount) external {
-        // Implement logic for transferring tokens between supporters
-        // This function may interact with other contracts
+    function transferToken(address to, uint amount) external {
+        require(amount > 0, "Invalid transfer amount");
+        require(tokenContract.balanceOf(msg.sender) >= amount, "Insufficient balance");
+
+        tokenContract.transferFrom(msg.sender, to, amount);
     }
 
-    function spendToken(address projectAddress) external {
+    function spendToken() external {
+        require(tokenContract.balanceOf(msg.sender) > 0, "No tokens to spend");
+
         // Implement logic for spending tokens to stream the movie
-        // This function may interact with other contracts
+
+        // Transfer the spent token from supporter to the platform
+        tokenContract.transfer(platform, 1);
+
+        // Emit an event or perform other actions based on the movie streaming.
+        // emit MovieStreamed(projectAddress, msg.sender, now);
     }
 
-    // Additional functions related to supporter actions can be added here
 }
