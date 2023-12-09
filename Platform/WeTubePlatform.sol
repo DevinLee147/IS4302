@@ -60,8 +60,8 @@ contract WeTubePlatform {
     function setProjectCompleted(uint256 projectId) external onlyPlatformOwner {
         MovieProject project = MovieProject(projects[projectId]);
 
-        // Check if the project has reached its funding goal
-        require(project.getCurrentFundsRaised() >= project.getFundingGoal(), "Project has not reached its funding goal");
+        //check if the video is uploaded successfully
+        //...
 
         // Set the project completion status
         project.setProjectCompleted(true);
@@ -70,5 +70,11 @@ contract WeTubePlatform {
     // Function to get the address of a specific project by ID
     function getProjectAddress(uint256 projectId) external view returns (address) {
         return projects[projectId];
+    }
+
+    // Function for the platform to confirm movie upload
+    function confirmUpload(uint256 projectId) external onlyPlatform {
+        MovieProject project = MovieProject(getProjectAddress(projectId));
+        project.confirmUpload();
     }
 }

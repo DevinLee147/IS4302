@@ -12,6 +12,8 @@ contract MovieProject is WeTubeNFT {
     uint256 public tokensSold;
     bool public projectCompleted;
 
+    uint256 public totalSpentTokens;
+
     mapping(address => uint256) public contributions;
     mapping(address => bool) public earlySupporters;
 
@@ -40,6 +42,7 @@ contract MovieProject is WeTubeNFT {
         tokenSupply = _tokenSupply;
         tokensSold = 0;
         projectCompleted = false;
+        totalSpentTokens = 0;
     }
 
     // Function for the creator to mint NFTs
@@ -68,6 +71,16 @@ contract MovieProject is WeTubeNFT {
         tokensSold += _amount;
     }
 
+    // Function to change token price, can only be called by the creator
+    function changeTokenPrice(uint256 newPrice) external onlyCreator projectNotCompleted {
+        tokenPrice = newPrice;
+    }
+
+    // Function to change token supply, can only be called by the creator
+    function changeTokenSupply(uint256 newSupply) external onlyCreator projectNotCompleted {
+        tokenSupply = newSupply;
+    }
+
     // Function to get the current funds raised
     function getCurrentFundsRaised() external view returns (uint256) {
         return address(this).balance;
@@ -93,6 +106,28 @@ contract MovieProject is WeTubeNFT {
         address payable senderAddress = payable(address(this));
         (bool success, ) = recipient.call{value: address(this).balance}("");
         require(success, "Transfer failed");
+    }
+
+    // Function for supporter to spend tokens and watch the movie
+    function spendToken(address supporter, uint256 amount) external {
+        // external oracle logic for streaming the movie
+
+        // Deduct the spent tokens from the supporter's balance
+        _burn(supporter, amount);
+
+        // Increment the total spent tokens counter
+        totalSpentTokens += amount;
+    }
+
+    // Function to dispense pledges when threshold is reached
+    function dispensePledge() external onlyCreator {
+        require(totalSpentTokens >= fundingThreshold, "Threshold not reached");
+
+        // Emit the event to notify the dispense of pledges
+        emit PledgesDispensed(totalSpentTokens);
+
+        // Reset the spent tokens counter
+        totalSpentTokens = 0;
     }
 
 }
