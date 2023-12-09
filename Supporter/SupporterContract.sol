@@ -1,55 +1,60 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "./WeTubeToken.sol";
 
-contract SupporterContract {
-    address public owner;
-    address public platform;
+/// @title SupporterContract - Contract for supporters to interact with WeTube tokens
+contract SupporterContract is Ownable {
     WeTubeToken public tokenContract;
 
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Not the owner");
-        _;
-    }
+    /// @dev Events to track token activities
+    event TokenPurchased(address indexed supporter, uint256 indexed tokenId);
+    event TokenTransferred(address indexed from, address indexed to, uint256 indexed tokenId);
+    event TokenSpent(address indexed supporter, uint256 indexed tokenId);
 
-    modifier onlyPlatform() {
-        require(msg.sender == platform, "Not the platform");
-        _;
-    }
-
-    constructor(address _platform, address _tokenContract) {
-        owner = msg.sender;
-        platform = _platform;
+    /// @dev Constructor to set the WeTubeToken contract address
+    constructor(address _tokenContract) {
         tokenContract = WeTubeToken(_tokenContract);
     }
 
-    function buyToken(uint amount) external payable {
-        require(amount > 0 && msg.value == amount * tokenContract.tokenPrice(), "Invalid pledge amount");
-        require(tokenContract.balanceOf(address(this)) >= amount, "Insufficient tokens available");
+    /// @dev Purchase tokens by sending Ether
+    function buyToken() external payable {
+        require(msg.value > 0, "Invalid pledge amount");
 
-        // Associate the purchased tokens with the supporter
-        tokenContract.transfer(msg.sender, amount);
+        // Mint a new token and assign it to the supporter
+        uint256 tokenId = mintToken(msg.sender);
+
+        emit TokenPurchased(msg.sender, tokenId);
     }
 
-    function transferToken(address to, uint amount) external {
-        require(amount > 0, "Invalid transfer amount");
-        require(tokenContract.balanceOf(msg.sender) >= amount, "Insufficient balance");
+    /// @dev Transfer tokens to another supporter
+    function transferToken(address to, uint256 tokenId) external {
+        require(to != address(0), "Invalid recipient address");
+        require(tokenContract.ownerOf(tokenId) == msg.sender, "You don't own this token");
 
-        tokenContract.transferFrom(msg.sender, to, amount);
+        // Transfer token from the supporter to the recipient
+        tokenContract.safeTransferFrom(msg.sender, to, tokenId);
+
+        emit TokenTransferred(msg.sender, to, tokenId);
     }
 
-    function spendToken() external {
-        require(tokenContract.balanceOf(msg.sender) > 0, "No tokens to spend");
+    /// @dev Spend tokens to watch a movie
+    function spendToken(uint256 tokenId) external {
+        require(tokenContract.ownerOf(tokenId) == msg.sender, "You don't own this token");
 
-        // Implement logic for spending tokens to stream the movie
+        // Burn the token (simplified example, in a real scenario, you might want to handle the movie streaming logic)
+        tokenContract.safeTransferFrom(msg.sender, address(0), tokenId);
 
-        // Transfer the spent token from supporter to the platform
-        tokenContract.transfer(platform, 1);
-
-        // Emit an event or perform other actions based on the movie streaming.
-        // emit MovieStreamed(projectAddress, msg.sender, now);
+        emit TokenSpent(msg.sender, tokenId);
     }
 
+    /// @dev Mint a new token and assign it to the supporter
+    function mintToken(address to) internal returns (uint256) {
+        uint256 tokenId = tokenContract.totalSupply() + 1;
+        tokenContract.mint(to, tokenId);
+
+        return tokenId;
+    }
 }
