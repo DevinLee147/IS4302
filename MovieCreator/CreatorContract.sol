@@ -1,47 +1,38 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "./WeTubePlatform.sol";
 
-/// @title CreatorContract - ERC721 token contract for project creators
-contract CreatorContract is ERC721, Ownable {
-    uint256 public nextProjectId = 1;
-    uint256 public fundingGoal;
-    mapping(uint256 => uint256) public projectFunds;
+contract CreatorContract {
+    WeTubePlatform public platform;
 
-    /// @dev Events to track project and funding activities
-    event ProjectCreated(address indexed creator, uint256 indexed projectId, string projectTitle);
-    event FundsReceived(address indexed supporter, uint256 indexed projectId, uint256 amount);
+    // Event emitted when a creator creates a new project
+    event ProjectCreated(address indexed creator, address indexed project, uint256 indexed projectId);
 
-    /// @dev Constructor to initialize the ERC721 token and set the funding goal
-    constructor(string memory name, string memory symbol, uint256 _fundingGoal) ERC721(name, symbol) {
-        fundingGoal = _fundingGoal;
+    constructor(address _platform) {
+        platform = WeTubePlatform(_platform);
     }
 
-    /// @dev Create a new project
-    function createProject(string memory projectTitle) external {
-        require(nextProjectId <= 10000, "Project limit reached");
+    // Function for a creator to create a new movie project
+    function createProject(
+        string memory projectName,
+        string memory projectSymbol,
+        uint256 fundingGoal,
+        uint256 fundingThreshold,
+        uint256 tokenPrice,
+        uint256 tokenSupply
+    ) external {
+        // Call the createProject function on the WeTubePlatform contract
+        platform.createProject(
+            projectName,
+            projectSymbol,
+            fundingGoal,
+            fundingThreshold,
+            tokenPrice,
+            tokenSupply
+        );
 
-        _safeMint(msg.sender, nextProjectId);
-
-        emit ProjectCreated(msg.sender, nextProjectId, projectTitle);
-
-        nextProjectId++;
-    }
-
-    /// @dev Receive funds for a project
-    function receiveFunds(uint256 projectId) external payable {
-        require(ownerOf(projectId) != address(0), "Invalid project");
-        require(msg.value > 0, "Invalid pledge amount");
-
-        projectFunds[projectId] += msg.value;
-
-        emit FundsReceived(msg.sender, projectId, msg.value);
-    }
-
-    /// @dev Check if a project has reached its funding goal
-    function hasReachedGoal(uint256 projectId) external view returns (bool) {
-        return projectFunds[projectId] >= fundingGoal;
+        // Emit an event to indicate the creation of a new project
+        emit ProjectCreated(msg.sender, address(this), platform.getProjectCounter());
     }
 }
