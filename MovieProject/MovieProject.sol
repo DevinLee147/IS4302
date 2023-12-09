@@ -27,6 +27,11 @@ contract MovieProject is WeTubeNFT {
         _;
     }
 
+    modifier projectCompleted() {
+        require(projectCompleted, "The project has not been completed");
+        _;
+    }
+
     constructor(
         string memory _name,
         string memory _symbol,
@@ -72,12 +77,12 @@ contract MovieProject is WeTubeNFT {
     }
 
     // Function to change token price, can only be called by the creator
-    function changeTokenPrice(uint256 newPrice) external onlyCreator projectNotCompleted {
+    function changeTokenPrice(uint256 newPrice) external onlyCreator projectCompleted {
         tokenPrice = newPrice;
     }
 
     // Function to change token supply, can only be called by the creator
-    function changeTokenSupply(uint256 newSupply) external onlyCreator projectNotCompleted {
+    function changeTokenSupply(uint256 newSupply) external onlyCreator projectCompleted {
         tokenSupply = newSupply;
     }
 
@@ -92,7 +97,7 @@ contract MovieProject is WeTubeNFT {
     }
 
     // Function to set the project completion status, can only be called by the platform
-    function setProjectCompleted(bool _completed) external onlyPlatform {
+    function setProjectCompleted(bool _completed) external onlyCreator {
         projectCompleted = _completed;
     }
 
@@ -125,15 +130,11 @@ contract MovieProject is WeTubeNFT {
 
         // Emit the event to notify the dispense of pledges
         emit PledgesDispensed(totalSpentTokens);
-
-        // Reset the spent tokens counter
-        totalSpentTokens = 0;
     }
 
     function confirmUpload() external onlyCreator(){
         // Implement the movie uploading process
-
-        projectCompleted = ture;
+        projectCompleted = true;
     }
 
 }
