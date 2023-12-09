@@ -130,4 +130,10 @@ contract MovieProject is WeTubeNFT {
         totalSpentTokens = 0;
     }
 
+    function confirmUpload() external onlyCreator(){
+        // Implement the movie uploading process
+
+        projectCompleted = ture;
+    }
+
 }

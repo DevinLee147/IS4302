@@ -7,14 +7,14 @@ contract WeTubeNFT is ERC721Enumerable {
     // Mapping from MovieProject address to a boolean indicating whether it is associated with this NFT contract
     mapping(address => bool) public isMovieProject;
 
+    // Constructor to set the name and symbol
+    constructor(string memory name, string memory symbol) ERC721(name, symbol) {}
+
     // Modifier to ensure that only associated MovieProjects can call certain functions
     modifier onlyMovieProject() {
         require(isMovieProject[msg.sender], "Only associated MovieProjects can call this function");
         _;
     }
-
-    // Constructor to set the name and symbol
-    constructor(string memory name, string memory symbol) ERC721(name, symbol) {}
 
     // Function to mint NFTs, can only be called by associated MovieProjects
     function mint(address to, uint256 amount) external onlyMovieProject {
